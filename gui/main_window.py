@@ -2,8 +2,9 @@ from PyQt5.QtWidgets import (
     QMainWindow, QVBoxLayout, QWidget, QLabel, QPushButton, QSystemTrayIcon, QMenu, QAction, QApplication, QDialog
 )
 from PyQt5.QtGui import QIcon, QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 
+from agents.decision_manager import DecisionManager, ActionType
 from gui.settings_dialog import SettingsDialog
 from config.settings import load_settings
 from agents.activity_monitor import ActivityMonitor
@@ -62,14 +63,12 @@ class MainWindow(QMainWindow):
                 border-radius: 8px;
                 font-size: 16px;
                 font-weight: bold;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             }
             QPushButton:hover {
                 background-color: #4338ca;
             }
             QPushButton:pressed {
                 background-color: #3730a3;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             }
         """)
         layout.addWidget(self.settings_button)
@@ -101,6 +100,19 @@ class MainWindow(QMainWindow):
         self.activity_monitor = ActivityMonitor()
         self.attention_analyzer = AttentionAnalyzer()
 
+        self.decision_manager = DecisionManager(self.current_settings)
+
+        # Добавить новые соединения сигналов:
+        self.attention_analyzer.analysis_result.connect(self.decision_manager.make_decision)
+        self.attention_analyzer.screenshot_analysis_result.connect(self.decision_manager.make_screenshot_decision)
+        self.decision_manager.notification_request.connect(self.show_decision_notification)
+        self.decision_manager.action_required.connect(self.handle_decision_action)
+
+        # Добавить таймер для статистики
+        self.stat_timer = QTimer()
+        self.stat_timer.timeout.connect(self.update_decision_stats)  # type: ifnore
+        self.stat_timer.start(5000)
+
         # --- ИЗМЕНЕНО: Подключаем сигнал с двумя аргументами ---
         self.activity_monitor.active_window_changed.connect(self.update_active_window_display)
         self.activity_monitor.active_window_changed.connect(self.attention_analyzer.add_data_for_analysis)
@@ -124,6 +136,7 @@ class MainWindow(QMainWindow):
             self.current_settings = load_settings()
             self.update_status(self.get_initial_status_message())
             self.attention_analyzer.update_settings()
+            self.decision_manager.update_settings(self.current_settings)
             print("Настройки обновлены после закрытия диалога.")
         else:
             print("Диалог настроек отменен.")
@@ -226,3 +239,61 @@ class MainWindow(QMainWindow):
                 QSystemTrayIcon.Critical,
                 5000
             )
+
+    def show_decision_notification(self, message: str):
+        """Показ уведомлений из DecisionManager"""
+        self.tray_icon.showMessage(
+            "TameWork - Уведомление",
+            message,
+            QSystemTrayIcon.Information,
+            5000
+        )
+        self.update_status(f"Уведомление: {message[:50]}...")
+
+    def handle_decision_action(self, action_type: str, target_info: str):
+        try:
+            if action_type == ActionType.BLOCK_APP.value:
+                self._block_application(target_info)
+            elif action_type == ActionType.CLOSE_WINDOW.value:
+                self._close_active_window()
+        except Exception as e:
+            self.update_status(f"Ошибка действия: {str(e)}")
+
+    def _block_application(self, target_info: str):
+        """Реализация блокировки приложения"""
+        # Пример для Windows
+        executable = target_info.split('|')[0].strip()
+        if executable:
+            self.update_status(f"Блокировка приложения: {executable[:20]}...")
+            # Здесь должна быть реальная логика блокировки
+
+    def _close_active_window(self):
+        """Закрытие активного окна"""
+        self.update_status("Закрытие активного окна...")
+        # Пример реализации через pyautogui
+        try:
+            import pyautogui
+            pyautogui.hotkey('alt', 'f4')
+        except Exception as e:
+            self.update_status(f"Ошибка закрытия окна: {str(e)}")
+
+    def update_decision_stats(self):
+        stats = self.decision_manager.get_statistics()
+
+        stats_text = (
+            f"📊 Статистика системы:\n"
+            f"Всего решений: {stats['total_decisions']}\n"
+            f"Уведомлений: {stats['performance_stats']['notifications_sent']}\n"
+            f"Блокировок: {stats['performance_stats']['apps_blocked']}\n"
+            f"Топ нарушений:\n"
+        )
+
+        for violation in stats.get('top_violations', [])[:2]:
+            stats_text += f"- {violation['target']}: {violation['count']} раз\n"
+
+        stats_text += f"\nТренд: {stats.get('decision_trend', 'Нет данных')}"
+
+        self.active_window_label.setToolTip(stats_text)
+
+
+

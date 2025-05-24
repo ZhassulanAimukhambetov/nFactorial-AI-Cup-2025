@@ -6,8 +6,8 @@ import easyocr
 from PyQt5.QtCore import QThread, pyqtSignal, QTime
 import torch
 from config.settings import load_settings
-from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
-from typing import List, Dict, Optional, Callable, Any, Tuple
+from transformers import pipeline
+from typing import List, Dict, Optional, Callable, Any
 import logging
 from datetime import datetime
 import asyncio
