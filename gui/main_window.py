@@ -1,9 +1,8 @@
-import sys
 from PyQt5.QtWidgets import (
     QMainWindow, QVBoxLayout, QWidget, QLabel, QPushButton, QSystemTrayIcon, QMenu, QAction, QApplication, QDialog
 )
 from PyQt5.QtGui import QIcon, QFont
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt
 
 from gui.settings_dialog import SettingsDialog
 from config.settings import load_settings
@@ -52,7 +51,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.active_window_label)
 
         self.settings_button = QPushButton("Настройки")
-        self.settings_button.clicked.connect(self.open_settings)
+        self.settings_button.clicked.connect(self.open_settings)  # type: ignore
 
         self.settings_button.setStyleSheet("""
             QPushButton {
@@ -83,21 +82,21 @@ class MainWindow(QMainWindow):
 
         tray_menu = QMenu()
         show_action = QAction("Показать окно", self)
-        show_action.triggered.connect(self.showNormal)
+        show_action.triggered.connect(self.showNormal)  # type: ignore
         tray_menu.addAction(show_action)
 
         hide_action = QAction("Скрыть окно", self)
-        hide_action.triggered.connect(self.hide)
+        hide_action.triggered.connect(self.hide)  # type: ignore
         tray_menu.addAction(hide_action)
 
         exit_action = QAction("Выход", self)
-        exit_action.triggered.connect(self.close_application)
+        exit_action.triggered.connect(self.close_application)  # type: ignore
         tray_menu.addAction(exit_action)
 
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
 
-        self.tray_icon.activated.connect(self.on_tray_icon_activated)
+        self.tray_icon.activated.connect(self.on_tray_icon_activated)  # type: ignore
 
         self.activity_monitor = ActivityMonitor()
         self.attention_analyzer = AttentionAnalyzer()
