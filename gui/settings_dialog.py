@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
     QListWidget, QRadioButton, QButtonGroup, QTimeEdit, QGroupBox, QMessageBox, QTabWidget, QWidget
 )
-from PyQt5.QtCore import Qt, QTime
+from PyQt5.QtCore import QTime
 from PyQt5.QtGui import QFont
 
 from config.settings import load_settings, save_settings, DEFAULT_SETTINGS
@@ -11,7 +11,7 @@ from config.settings import load_settings, save_settings, DEFAULT_SETTINGS
 class SettingsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Настройки Усилителя Внимания")
+        self.setWindowTitle("Настройки TameWork")
         self.setGeometry(200, 200, 600, 700)  # Увеличим размер для вкладок
         self.setModal(True)
 

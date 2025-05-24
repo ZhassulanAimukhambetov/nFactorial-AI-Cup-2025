@@ -14,7 +14,7 @@ from agents.attention_analyzer import AttentionAnalyzer
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Усилитель Внимания")
+        self.setWindowTitle("TameWork")
         self.setGeometry(100, 100, 700, 500)
         self.setMinimumSize(400, 300)
 
@@ -79,7 +79,7 @@ class MainWindow(QMainWindow):
 
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon.fromTheme("applications-other", QIcon(":/icons/default.png")))
-        self.tray_icon.setToolTip("Усилитель Внимания")
+        self.tray_icon.setToolTip("TameWork")
 
         tray_menu = QMenu()
         show_action = QAction("Показать окно", self)
@@ -117,7 +117,7 @@ class MainWindow(QMainWindow):
 
     def get_initial_status_message(self):
         mode_text = "Мягкий" if self.current_settings["mode"] == "soft" else "Строгий"
-        return f"Усилитель Внимания\nРежим: {mode_text}"
+        return f"TameWork\nРежим: {mode_text}"
 
     def open_settings(self):
         dialog = SettingsDialog(self)
@@ -144,7 +144,7 @@ class MainWindow(QMainWindow):
             self.hide()
             event.ignore()
             self.tray_icon.showMessage(
-                "Усилитель Внимания",
+                "TameWork",
                 "Приложение свернуто в системный трей.",
                 QSystemTrayIcon.Information,
                 2000
@@ -171,27 +171,33 @@ class MainWindow(QMainWindow):
         if classification == "distraction":
             self.status_label.setText(f"ОТВЛЕЧЕНИЕ: {window_title[:40]}...")
             self.status_label.setStyleSheet(
-                "QLabel { background-color: #fef2f2; border: 2px solid #ef4444; border-radius: 10px; padding: 20px; margin-bottom: 20px; color: #dc2626; }")
+                "QLabel { background-color: #fef2f2; border: 2px solid #ef4444; border-radius: 10px; padding: 20px; "
+                "margin-bottom: 20px; color: #dc2626; }")
         elif classification == "productive":
             self.status_label.setText(f"Продуктивно: {window_title[:40]}...")
             self.status_label.setStyleSheet(
-                "QLabel { background-color: #ecfdf5; border: 2px solid #22c55e; border-radius: 10px; padding: 20px; margin-bottom: 20px; color: #16a34a; }")
+                "QLabel { background-color: #ecfdf5; border: 2px solid #22c55e; border-radius: 10px; padding: 20px; "
+                "margin-bottom: 20px; color: #16a34a; }")
         elif classification == "ignored":
             self.status_label.setText(f"Игнорируется: {window_title[:40]}...")
             self.status_label.setStyleSheet(
-                "QLabel { background-color: #e0f2fe; border: 2px solid #38bdf8; border-radius: 10px; padding: 20px; margin-bottom: 20px; color: #0ea5e9; }")
-        elif classification == "ollama_down":
-            self.status_label.setText("ОШИБКА: Ollama не запущена!")
-            self.status_label.setStyleSheet(
-                "QLabel { background-color: #fffbeb; border: 2px solid #f59e0b; border-radius: 10px; padding: 20px; margin-bottom: 20px; color: #d97706; }")
+                "QLabel { background-color: #e0f2fe; border: 2px solid #38bdf8; border-radius: 10px; padding: 20px; "
+                "margin-bottom: 20px; color: #0ea5e9; }")
+        # elif classification == "ollama_down":
+        #     self.status_label.setText("ОШИБКА: Ollama не запущена!")
+        #     self.status_label.setStyleSheet(
+        #         "QLabel { background-color: #fffbeb; border: 2px solid #f59e0b; border-radius: 10px; padding: 20px; "
+        #         "margin-bottom: 20px; color: #d97706; }")
         elif classification == "error":
             self.status_label.setText("ОШИБКА АНАЛИЗА!")
             self.status_label.setStyleSheet(
-                "QLabel { background-color: #fef2f2; border: 2px solid #ef4444; border-radius: 10px; padding: 20px; margin-bottom: 20px; color: #dc2626; }")
+                "QLabel { background-color: #fef2f2; border: 2px solid #ef4444; border-radius: 10px; padding: 20px; "
+                "margin-bottom: 20px; color: #dc2626; }")
         elif classification == "unknown":
             self.status_label.setText(f"Неизвестно: {window_title[:40]}...")
             self.status_label.setStyleSheet(
-                "QLabel { background-color: #eff6ff; border: 2px solid #60a5fa; border-radius: 10px; padding: 20px; margin-bottom: 20px; color: #2563eb; }")
+                "QLabel { background-color: #eff6ff; border: 2px solid #60a5fa; border-radius: 10px; padding: 20px; "
+                "margin-bottom: 20px; color: #2563eb; }")
         else:
             self.status_label.setStyleSheet("""
                 QLabel {
@@ -207,7 +213,7 @@ class MainWindow(QMainWindow):
     def handle_action_command(self, action_type: str, target_info: str):
         if action_type == "notify":
             self.tray_icon.showMessage(
-                "Усилитель Внимания: Отвлечение!",
+                "TameWork: Отвлечение!",
                 target_info,
                 QSystemTrayIcon.Warning,
                 5000
@@ -216,7 +222,7 @@ class MainWindow(QMainWindow):
         elif action_type == "block_or_close":
             print(f"Команда: Блокировать/Закрыть. Цель: {target_info}")
             self.tray_icon.showMessage(
-                "Усилитель Внимания: Блокировка!",
+                "TameWork: Блокировка!",
                 f"Пытаюсь заблокировать/закрыть: {target_info}",
                 QSystemTrayIcon.Critical,
                 5000

@@ -11,6 +11,8 @@ from typing import List, Dict
 import logging
 from datetime import datetime
 
+# ВНИМАНИЕ: ХОЛОДНЫЙ ЗАПУСК БУДЕТ ДЛИТСЯ ДОЛГО
+
 
 class AttentionAnalyzer(QThread):
     analysis_result = pyqtSignal(str, str)  # (window_title, classification)
@@ -39,20 +41,16 @@ class AttentionAnalyzer(QThread):
         # Настройки анализа скриншотов
         self.screenshot_analysis_enabled = True
         self.last_screenshot_analysis = 0
-        self.screenshot_analysis_interval = 15  # Анализируем скриншоты каждые 15 секунд
+        self.screenshot_analysis_interval = 20  # Анализируем скриншоты каждые 20 секунд
         self.screenshot_history = []
 
     def _initialize_model(self):
         """Инициализируем модель для классификации активности"""
         try:
-            self.status_message.emit("Загрузка NLP модели...")
-
-            # Используем более легкую модель, специально обученную для классификации
-            # Эта модель хорошо понимает контекст работы и развлечений
-            # model_name = "cardiffnlp/twitter-roberta-base-sentiment-latest"
-
-            # Альтернативные варианты (можно попробовать, если первая не подойдет):
+            self.status_message.emit("Загрузка NLP модели...")  # type: ignore
+            # менее точная модель - не использую
             # model_name = "microsoft/DialoGPT-medium" # Для понимания контекста
+
             model_name = "facebook/bart-large-mnli"  # Для zero-shot классификации
 
             # Загружаем модель и токенизатор
@@ -60,7 +58,6 @@ class AttentionAnalyzer(QThread):
             self.model = AutoModelForSequenceClassification.from_pretrained(model_name)
 
             # Создаем pipeline для классификации
-            # Для zero-shot классификации используем другой подход
             self.classifier = pipeline(
                 "zero-shot-classification",
                 model="facebook/bart-large-mnli",
@@ -68,18 +65,18 @@ class AttentionAnalyzer(QThread):
             )
 
             self.model_loaded = True
-            self.status_message.emit("NLP модель успешно загружена!")
+            self.status_message.emit("NLP модель успешно загружена!")  # type: ignore
             print("AttentionAnalyzer: Модель Hugging Face успешно инициализирована")
 
         except Exception as e:
             print(f"AttentionAnalyzer: Ошибка загрузки модели: {e}")
-            self.status_message.emit(f"Ошибка загрузки NLP модели: {e}")
+            self.status_message.emit(f"Ошибка загрузки NLP модели: {e}")  # type: ignore
             self.model_loaded = False
 
     def _initialize_ocr_analyzer(self):
         """Инициализируем OCR анализатор для скриншотов"""
         try:
-            self.status_message.emit("Инициализация OCR анализатора...")
+            self.status_message.emit("Инициализация OCR анализатора...")  # type: ignore
 
             # Настройка логирования для OCR
             logging.getLogger('easyocr').setLevel(logging.WARNING)
@@ -119,12 +116,12 @@ class AttentionAnalyzer(QThread):
             self.distraction_threshold = 2  # Минимальное количество ключевых слов
 
             self.ocr_initialized = True
-            self.status_message.emit("OCR анализатор готов к работе!")
+            self.status_message.emit("OCR анализатор готов к работе!")  # type: ignore
             print("AttentionAnalyzer: OCR анализатор успешно инициализирован")
 
         except Exception as e:
             print(f"AttentionAnalyzer: Ошибка инициализации OCR: {e}")
-            self.status_message.emit(f"Ошибка инициализации OCR: {e}")
+            self.status_message.emit(f"Ошибка инициализации OCR: {e}")  # type: ignore
             self.ocr_initialized = False
 
     def take_screenshot(self) -> np.ndarray:
@@ -135,7 +132,7 @@ class AttentionAnalyzer(QThread):
             return cv2.resize(screenshot_np, (0, 0), fx=0.5, fy=0.5)
         except Exception as e:
             print(f"AttentionAnalyzer: Ошибка при создании скриншота: {e}")
-            return None
+            return None  # type: ignore
 
     def extract_text_from_image(self, image: np.ndarray) -> str:
         """Извлекает текст из изображения с помощью EasyOCR"""
@@ -280,7 +277,7 @@ class AttentionAnalyzer(QThread):
             self.window_data_queue.append(current_data)
 
     def run(self):
-        self.status_message.emit("Анализатор внимания запущен. Ожидание данных...")
+        self.status_message.emit("Анализатор внимания запущен. Ожидание данных...")  # type: ignore
 
         while self._running:
             current_time = time.time()
@@ -293,14 +290,14 @@ class AttentionAnalyzer(QThread):
 
                     title_to_analyze, exe_to_analyze = data_to_analyze
                     self.processing_data = True
-                    self.status_message.emit(f"Анализ: '{title_to_analyze[:30]}...' ({exe_to_analyze})")
+                    self.status_message.emit(f"Анализ: '{title_to_analyze[:30]}...' ({exe_to_analyze})")  # type: ignore
 
                     classification = self._pre_classify_with_keywords(title_to_analyze, exe_to_analyze)
 
                     if classification == "needs_llm":
                         classification = self._classify_with_huggingface(title_to_analyze, exe_to_analyze)
 
-                    self.analysis_result.emit(title_to_analyze, classification)
+                    self.analysis_result.emit(title_to_analyze, classification)  # type: ignore
                     self._route_action(title_to_analyze, exe_to_analyze, classification)
 
                     self.last_analysis_time = time.time()
@@ -310,13 +307,12 @@ class AttentionAnalyzer(QThread):
             if (self.screenshot_analysis_enabled and
                     current_time - self.last_screenshot_analysis >= self.screenshot_analysis_interval):
 
-                self.status_message.emit("Анализ скриншота экрана...")
+                self.status_message.emit("Анализ скриншота экрана...")  # type: ignore
                 screenshot_analysis = self.analyze_current_screen()
 
                 if 'error' not in screenshot_analysis:
-                    self.screenshot_analysis_result.emit(screenshot_analysis)
+                    self.screenshot_analysis_result.emit(screenshot_analysis)  # type: ignore
 
-                    # Если обнаружено отвлечение на скриншоте, обрабатываем его
                     if screenshot_analysis.get('is_distracted', False):
                         self._handle_screenshot_distraction(screenshot_analysis)
 
@@ -336,7 +332,6 @@ class AttentionAnalyzer(QThread):
             start_time = QTime.fromString(self.current_settings["work_start_time"], "HH:mm")
             end_time = QTime.fromString(self.current_settings["work_end_time"], "HH:mm")
 
-            is_work_time = False
             if start_time.isValid() and end_time.isValid():
                 if start_time <= end_time:
                     is_work_time = start_time <= current_time <= end_time
@@ -346,7 +341,8 @@ class AttentionAnalyzer(QThread):
                 is_work_time = True
 
             if not is_work_time:
-                self.status_message.emit(f"Отвлечение обнаружено на экране ({level}), но не рабочее время.")
+                self.status_message.emit(f"Отвлечение обнаружено на экране "  # type: ignore
+                                         f"({level}), но не рабочее время.")
                 return
 
             # Формируем сообщение о найденном отвлечении
@@ -357,16 +353,15 @@ class AttentionAnalyzer(QThread):
             if self.current_settings["mode"] == "soft":
                 message = (f"Обнаружено отвлечение на экране! {distraction_info}. "
                            f"Режим: Мягкий. Время вернуться к работе!")
-                self.action_command.emit("notify", message)
-                self.status_message.emit(f"Отвлечение на экране ({level}): Отправлено уведомление.")
+                self.action_command.emit("notify", message)  # type: ignore
+                self.status_message.emit(f"Отвлечение на экране ({level}): Отправлено уведомление.")  # type: ignore
             elif self.current_settings["mode"] == "strict":
                 # В строгом режиме можем закрыть активное окно или заблокировать доступ
                 message = (f"Обнаружено отвлечение на экране! {distraction_info}. "
                            f"Режим: Строгий. Принимаю меры...")
-                # Для скриншотов сложнее определить конкретное приложение для блокировки
-                # Поэтому отправляем общее уведомление и команду на закрытие активного окна
-                self.action_command.emit("close_active_window", "")
-                self.status_message.emit(f"Отвлечение на экране ({level}): Закрытие активного окна.")
+
+                self.action_command.emit("close_active_window", "")  # type: ignore
+                self.status_message.emit(f"Отвлечение на экране ({level}): Закрытие активного окна.")  # type: ignore
 
         except Exception as e:
             print(f"AttentionAnalyzer: Ошибка обработки отвлечения на скриншоте: {e}")
@@ -442,12 +437,12 @@ class AttentionAnalyzer(QThread):
             return self._fallback_classification(window_title, executable_name)
 
         try:
-            # Формируем текст для анализа
+            # Текст для анализа
             text_to_analyze = f"{window_title} {executable_name}".strip()
             if not text_to_analyze:
                 return "unknown"
 
-            # Определяем категории для zero-shot классификации
+            # Категории для zero-shot классификации
             candidate_labels = [
                 "work and productivity",
                 "entertainment and distraction",
@@ -484,7 +479,7 @@ class AttentionAnalyzer(QThread):
 
         except Exception as e:
             print(f"AttentionAnalyzer: Ошибка при классификации с HuggingFace: {e}")
-            self.status_message.emit(f"Ошибка NLP: {str(e)[:50]}...")
+            self.status_message.emit(f"Ошибка NLP: {str(e)[:50]}...")  # type: ignore
             return self._fallback_classification(window_title, executable_name)
 
     def _fallback_classification(self, window_title: str, executable_name: str) -> str:
@@ -525,14 +520,13 @@ class AttentionAnalyzer(QThread):
         display_name_short = display_name[:70]
 
         if classification == "ignored":
-            self.status_message.emit(f"Активность: '{display_name_short}...' (Игнорируется)")
+            self.status_message.emit(f"Активность: '{display_name_short}...' (Игнорируется)")  # type: ignore
             return
 
         current_time = QTime.currentTime()
         start_time = QTime.fromString(self.current_settings["work_start_time"], "HH:mm")
         end_time = QTime.fromString(self.current_settings["work_end_time"], "HH:mm")
 
-        is_work_time = False
         if start_time.isValid() and end_time.isValid():
             if start_time <= end_time:
                 is_work_time = start_time <= current_time <= end_time
@@ -542,7 +536,8 @@ class AttentionAnalyzer(QThread):
             is_work_time = True
 
         if not is_work_time and classification == "distraction":
-            self.status_message.emit(f"Отвлечение ({display_name_short}...), но не рабочее время. Действий нет.")
+            self.status_message.emit(f"Отвлечение ({display_name_short}...), "  # type: ignore
+                                     f"но не рабочее время. Действий нет.")
             return
 
         if classification == "distraction":
@@ -550,21 +545,22 @@ class AttentionAnalyzer(QThread):
             if self.current_settings["mode"] == "soft":
                 message = (f"Кажется, вы отвлекаетесь на '{display_name_short}'. "
                            f"Режим: Мягкий. Пора вернуться к работе!")
-                self.action_command.emit("notify", message)
-                self.status_message.emit("Отвлечение: Отправлено уведомление.")
+                self.action_command.emit("notify", message)  # type: ignore
+                self.status_message.emit("Отвлечение: Отправлено уведомление.")  # type: ignore
             elif self.current_settings["mode"] == "strict":
                 message = (f"Обнаружено отвлечение: '{display_name_short}'. "
                            f"Режим: Строгий. Блокирую/закрываю...")
-                self.action_command.emit("block_or_close", target_info)
-                self.status_message.emit(f"Отвлечение ({display_name_short}): Отправлена команда блокировки.")
+                self.action_command.emit("block_or_close", target_info)  # type: ignore
+                self.status_message.emit(f"Отвлечение ({display_name_short}): "  # type: ignore
+                                         f"Отправлена команда блокировки.")
         elif classification == "productive":
-            self.status_message.emit(f"Активность: '{display_name_short}...' (Продуктивно)")
+            self.status_message.emit(f"Активность: '{display_name_short}...' (Продуктивно)")  # type: ignore
         elif classification == "model_error":
-            self.status_message.emit("Ошибка NLP модели. Мониторинг ограничен.")
+            self.status_message.emit("Ошибка NLP модели. Мониторинг ограничен.")  # type: ignore
         elif classification == "unknown":
-            self.status_message.emit(f"Неизвестная активность: '{display_name_short}...'")
+            self.status_message.emit(f"Неизвестная активность: '{display_name_short}...'")  # type: ignore
 
     def stop(self):
         self._running = False
         self.wait()
-        self.status_message.emit("Анализатор внимания остановлен.")
+        self.status_message.emit("Анализатор внимания остановлен.")  # type: ignore
