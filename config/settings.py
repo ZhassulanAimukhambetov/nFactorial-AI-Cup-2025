@@ -47,8 +47,12 @@ DEFAULT_SETTINGS = {
     ],
     "mode": "soft",
     "work_start_time": "09:00",
-    "work_end_time": "18:00"
+    "work_end_time": "18:00",
+    "screenshot_analysis_enabled": True,
+    "screenshot_analysis_interval": 15,  # секунды
+    "distraction_threshold": 2,
 }
+
 
 def load_settings():
     """
@@ -66,6 +70,7 @@ def load_settings():
     else:
         print("Файл настроек не найден. Используем дефолтные настройки.")
         return DEFAULT_SETTINGS
+
 
 def save_settings(settings: dict):
     """
