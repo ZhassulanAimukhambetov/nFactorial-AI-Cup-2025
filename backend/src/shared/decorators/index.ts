@@ -1,0 +1,1 @@
+export { Roles, UserRole } from './roles.decorator'; 
