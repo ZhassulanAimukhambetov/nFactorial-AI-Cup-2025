@@ -741,7 +741,7 @@ class AttentionAnalyzer(QThread):
             level = "LOW"
             is_distracted = False
 
-        analysis_result = {
+        analysis_result1 = {
             'is_distracted': is_distracted,
             'distraction_level': level,
             'score': distraction_score,
@@ -752,8 +752,8 @@ class AttentionAnalyzer(QThread):
         }
 
         # Сохраняем в историю
-        self.screenshot_history.append(analysis_result)
-        return analysis_result
+        self.screenshot_history.append(analysis_result1)
+        return analysis_result1
 
     def run(self):
         """Основной цикл работы анализатора"""

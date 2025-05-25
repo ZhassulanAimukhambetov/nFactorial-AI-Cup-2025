@@ -82,8 +82,10 @@ class DecisionManager(QObject):
                     reason="Не рабочее время"
                 )
 
-            # Обрабатываем разные типы классификации
-            if classification == "ignored":
+            if self._should_ignore_activity(window_title, executable_name):
+                return self._handle_ignored_activity(window_title, executable_name)
+
+            elif classification == "ignored":
                 return self._handle_ignored_activity(window_title, executable_name)
 
             elif classification == "productive":
@@ -169,6 +171,9 @@ class DecisionManager(QObject):
         target_info = f"{executable_name}|{window_title}"
         display_name = self._get_display_name(window_title, executable_name)
 
+        if self._should_ignore_activity(window_title, executable_name):
+            return self._handle_ignored_activity(window_title, executable_name)
+
         # Определяем серьезность на основе confidence и истории нарушений
         violation_key = executable_name or window_title
         violation_count = self.violation_counts.get(violation_key, 0)
@@ -232,6 +237,9 @@ class DecisionManager(QObject):
     def _handle_unknown_activity(self, window_title: str, executable_name: str) -> Decision:
         """Обрабатывает неизвестную активность"""
         display_name = self._get_display_name(window_title, executable_name)
+
+        if self._should_ignore_activity(window_title, executable_name):
+            return self._handle_ignored_activity(window_title, executable_name)
 
         return self._create_decision(
             ActionType.LOG_ACTIVITY,
@@ -436,3 +444,31 @@ class DecisionManager(QObject):
             'windows_closed': 0
         }
         self.status_update.emit("Статистика DecisionManager сброшена")  # type: ignore
+
+    def _should_ignore_activity(self, window_title: str, executable_name: str) -> bool:
+        """
+        НОВЫЙ МЕТОД: Проверяет, следует ли игнорировать данную активность
+        на основе настроек игнорируемых ключевых слов
+        """
+        ignored_keywords = self.settings.get('ignored_keywords', [])
+
+        if not ignored_keywords:
+            return False
+
+        # Приводим к нижнему регистру для сравнения
+        window_title_lower = window_title.lower() if window_title else ""
+        executable_name_lower = executable_name.lower() if executable_name else ""
+
+        # Проверяем каждое игнорируемое ключевое слово
+        for keyword in ignored_keywords:
+            keyword_lower = keyword.lower()
+
+            # Проверяем наличие ключевого слова в заголовке окна или имени исполняемого файла
+            if (keyword_lower in window_title_lower or
+                    keyword_lower in executable_name_lower):
+                logging.info(f"Активность игнорируется по ключевому слову '{keyword}': "
+                             f"окно='{window_title}', exe='{executable_name}'")
+                return True
+
+        return False
+
